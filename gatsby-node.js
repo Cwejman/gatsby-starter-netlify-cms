@@ -1,75 +1,110 @@
 const _ = require('lodash')
-const path = require('path')
+const { resolve, join } = require('path')
 const { createFilePath } = require('gatsby-source-filesystem')
 
-exports.createPages = ({ actions, graphql }) => {
-  const { createPage } = actions
-
-  return graphql(`
-    {
-      allMarkdownRemark(limit: 1000) {
-        edges {
-          node {
-            id
-            fields {
-              slug
-            }
-            frontmatter {
-              tags
-              templateKey
-            }
-          }
+const query = `{
+  allMarkdownRemark {
+    edges {
+      node {
+        id
+        frontmatter {
+          path
         }
       }
     }
-  `).then(result => {
-    if (result.errors) {
-      result.errors.forEach(e => console.error(e.toString()))
-      return Promise.reject(result.errors)
-    }
+  }
+}`;
 
-    const posts = result.data.allMarkdownRemark.edges
+const createPages = actions => result => {
+  if (result.error) {
+    throw result.error;
+  } else {
+    result.data.allMarkdownRemark.edges.forEach(edge => {
+      const path = edge.node.frontmatter.path;
+      const id = edge.node.id;
 
-    posts.forEach(edge => {
-      const id = edge.node.id
-      createPage({
-        path: edge.node.fields.slug,
-        tags: edge.node.frontmatter.tags,
-        component: path.resolve(
-          `src/templates/${String(edge.node.frontmatter.templateKey)}.js`
-        ),
-        // additional data can be passed via context
+      actions.createPage({
+        component: join(resolve('src/pages'), path, 'index.js'),
         context: {
           id,
         },
-      })
-    })
+        path,
+      });
+    });
+  }
+};
 
-    // Tag pages:
-    let tags = []
-    // Iterate through each post, putting all found tags into `tags`
-    posts.forEach(edge => {
-      if (_.get(edge, `node.frontmatter.tags`)) {
-        tags = tags.concat(edge.node.frontmatter.tags)
-      }
-    })
-    // Eliminate duplicate tags
-    tags = _.uniq(tags)
+exports.createPages = ({ actions, graphql }) => graphql(query).then(createPages(actions));
 
-    // Make tag pages
-    tags.forEach(tag => {
-      const tagPath = `/tags/${_.kebabCase(tag)}/`
+//   return graphql(`
+//     {
+//       allMarkdownRemark(limit: 1000) {
+//         edges {
+//           node {
+//             id
+//             fields {
+//               slug
+//             }
+//             frontmatter {
+//               tags
+//               templateKey
+//             }
+//           }
+//         }
+//       }
+//     }
+//   `).then(result => {
+//     if (result.errors) {
+//       result.errors.forEach(e => console.error(e.toString()))
+//       return Promise.reject(result.errors)
+//     }
 
-      createPage({
-        path: tagPath,
-        component: path.resolve(`src/templates/tags.js`),
-        context: {
-          tag,
-        },
-      })
-    })
-  })
-}
+//     const posts = result.data.allMarkdownRemark.edges
+
+//     posts.forEach(edge => {
+//       const id = edge.node.id
+//       createPage({
+//         path: edge.node.fields.slug,
+//         tags: edge.node.frontmatter.tags,
+//         component: path.resolve(
+//           `src/templates/${String(edge.node.frontmatter.templateKey)}.js`
+//         ),
+//         // additional data can be passed via context
+//         context: {
+//           id,
+//         },
+//       })
+//     })
+
+//     // Tag pages:
+//     let tags = []
+//     // Iterate through each post, putting all found tags into `tags`
+//     posts.forEach(edge => {
+//       if (_.get(edge, `node.frontmatter.tags`)) {
+//         tags = tags.concat(edge.node.frontmatter.tags)
+//       }
+//     })
+//     // Eliminate duplicate tags
+//     tags = _.uniq(tags)
+
+//     createPage({
+//       path: '/',
+//     })
+
+//     // Make tag pages
+//     tags.forEach(tag => {
+//       const tagPath = `/tags/${_.kebabCase(tag)}/`
+
+//       createPage({
+//         path: tagPath,
+//         component: path.resolve(`src/templates/tags.js`),
+//         context: {
+//           tag,
+//         },
+//       })
+//     })
+//   })
+// }
 
 exports.onCreateNode = ({ node, actions, getNode }) => {
   const { createNodeField } = actions

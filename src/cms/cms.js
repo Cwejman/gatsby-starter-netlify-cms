@@ -1,11 +1,17 @@
-import CMS from 'netlify-cms'
+import CMS from 'netlify-cms';
+import React from 'react';
+import { Template } from '../pages/';
 
-import AboutPagePreview from './preview-templates/AboutPagePreview'
-import BlogPostPreview from './preview-templates/BlogPostPreview'
-import ProductPagePreview from './preview-templates/ProductPagePreview'
-import MainPagePreview from './preview-templates/MainPagePreview'
+const MainPagePreview = ({ entry }) => {
+  const entryMenus = entry.getIn(['data', 'menus', 'dishes']);
+  const menus = entryMenus ? entryMenus.toJS() : [];
 
-CMS.registerPreviewTemplate('about', AboutPagePreview)
-CMS.registerPreviewTemplate('products', ProductPagePreview)
-CMS.registerPreviewTemplate('blog', BlogPostPreview)
+  return (
+    <Template
+      intro={entry.getIn(['data', 'intro'])}
+      menus={menus}
+    />
+  );
+};
+
 CMS.registerPreviewTemplate('main', MainPagePreview)

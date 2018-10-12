@@ -1,10 +1,9 @@
 ---
-templateKey: 'main-page'
-path: /main
-introduction: Hellloo
+path: /
+introduction: Hello
 menus:
   - dishes:
-    - name: Banan
+    - name: Banana
       price: 80
     - name: Pea
       price: 100
